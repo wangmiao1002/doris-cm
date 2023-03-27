@@ -1,0 +1,519 @@
+{
+  "name": "DORIS",
+  "label": "Doris",
+  "description": "An easy-to-use, high-performance and unified analytical database.",
+  "version": "%SERVICEVERSION%",
+  "compatibility": {
+    "cdhVersion": {
+      "min": "5.14.0"
+    }
+  },
+  "runAs": {
+    "user": "doris",
+    "group": "doris",
+    "principal": "doris"
+  },
+  "inExpressWizard": true,
+  "icon": "images/icon.png",
+  "parcel": {
+    "requiredTags": [
+      "doris"
+    ],
+    "optionalTags": [
+      "doris-plugin"
+    ]
+  },
+  "serviceInit": {
+  },
+  "parameters": [],
+  "roles": [
+    {
+      "name": "FRONTEND",
+      "label": "Frontend",
+      "pluralLabel": "Frontend Server",
+      "jvmBased": true,
+      "startRunner": {
+        "program": "scripts/fecontrol.sh",
+        "args": [
+          "start"
+        ],
+      "environmentVariables":{
+                    "DORIS_FE_MEMORY":"${frontend_server_max_heapsize}",
+                    "DORIS_FE_MASTER_IP":"${frontend_ha_master_ip}",
+                    "DORIS_FE_MASTER_PORT":"${edit_log_port}",
+                    "DORIS_FE_FIRST_LIVE":"${frontend_server_first_start_enabled}"    
+      },
+      "internal" : "true"
+    },          
+      "kerberosPrincipals": [
+        {
+          "name": "DORIS_PRINCIPAL",
+          "primary": "${principal}",
+          "instance": "${host}"
+        },
+        {
+          "name": "SPNEGO_PRINCIPAL",
+          "primary": "HTTP",
+          "instance": "${host}"
+        }
+      ],
+      "commands": [],
+      "topology": {
+        "minInstances": "1",
+        "requiresOddNumberOfInstances" : "true"
+         		
+      },
+      "logging": {
+	"dir" : "/var/log/doris",
+        "filename" : "fe.log",
+        "modifiable" : true,
+        "configName" : "log4j2-spring.xml",
+        "loggingType" : "logback"
+      },
+      "parameters": [
+        {
+          "name": "http_port",
+          "label": "Doris Frontend http Port",
+          "configName": "http_port",
+          "description": "The port of the Doris Frontend Web UI",
+          "required": "true",
+          "type": "port",
+          "default": 8030
+        },
+		{
+          "name": "rpc_port",
+          "label": "Doris Frontend rpc Port",
+          "configName": "rpc_port",
+          "description": "The port of the Doris Frontend Rpc Communication",
+          "required": "true",
+          "type": "port",
+          "default": 9020
+        },
+		{
+          "name": "query_port",
+          "label": "Doris Frontend query Port",
+          "configName": "query_port",
+          "description": "The port of the Doris Frontend Client",
+          "required": "true",
+          "type": "port",
+          "default": 9030
+        },
+        {
+            "name":"fe_log_dir",
+            "label":"FE LOG DIR",
+            "description":"Store Fe log location",
+            "configName":"sys_log_dir",
+            "default":"/var/log/doris",
+            "type":"path",
+            "pathType":"serviceSpecific",
+            "required":"true"
+       },
+       {
+
+            "name":"frontend_server_max_heapsize",
+            "label":"Java Heap Size of Frontend Server in Bytes",
+            "description":"Maximum size for the Java process heap memory. Passed to Java -Xmx. Measured in bytes.",
+            "required":"true",
+            "type":"memory",
+            "unit":"bytes",
+            "min":67108864,
+            "default":536870912
+       },
+       {
+          "name": "frontend_server_first_start_enabled",
+          "label": "Frontend HA mode First Start",
+          "description": "Frontend first start in Ha deployment mode",
+          "required": "true",
+          "type": "boolean",
+          "default": false
+        },
+       {
+          "name": "edit_log_port",
+          "label": "Doris Frontend edit_log Port",
+          "configName": "edit_log_port",
+          "description": "The port of the Doris Frontend edit_log",
+          "required": "true",
+          "type": "port",
+          "default": 9010
+        },
+        {
+          "name": "priority_networks",
+          "label": "priority networks",
+          "configName": "priority_networks",
+          "description": "priority networks",
+          "type": "string",
+          "default": "0.0.0.0/24"
+        },
+        {
+          "name": "frontend_ha_master_ip",
+          "label": "frontend ha master ip",
+          "configName": "frontend_ha_master_ip",
+          "description": "The record master node is used to register the backup node",
+          "type": "string",
+          "default": "0.0.0.0"
+        },
+        {
+          "name": "meta_dir",
+          "label": "Doris meta Data Directory",
+          "description": "The location used by doris meta.",
+          "required": "false",
+          "type": "path",
+          "pathType": "localDataDir",
+          "default": "/data/doris/fe",
+          "required": "true",
+          "minLength": 1,
+          "configurableInWizard": true
+        }
+      ],
+      "sslServer": {
+        "keyIdentifier": "doris_frontend",
+        "enabledConfigName": "doris.ssl",
+        "keystorePasswordCredentialProviderCompatible": false,
+        "keystorePasswordScriptBased": false,
+        "keystoreKeyPasswordScriptBased": false,
+        "keystoreKeyPasswordCredentialProviderCompatible": false,
+        "keyPasswordOptionality": "required"
+      },
+      "externalLink" : {
+        "name" : "doris_frontend_address",
+        "label" : "Doris Frontend Web UI",
+        "url" : "http://${host}:${http_port}",
+        "secureUrl" : "https://${host}:${http_port}"
+      },
+      "configWriter": {
+        "generators": [
+          {
+            "filename": "conf/fe.conf",
+            "configFormat": "properties",
+            "includedParams": [
+	     	    "http_port",
+            	"rpc_port",
+            	"query_port",
+            	"edit_log_port",
+            	"priority_networks",
+		        "meta_dir",
+                "fe_log_dir"
+            ]
+          }
+        ]
+      }
+    },
+	{
+      "name": "BACKEND",
+      "label": "Backend",
+      "pluralLabel": "Backend Server",
+      "jvmBased": false,
+      "startRunner": {
+        "program": "scripts/becontrol.sh",
+        "args": ["start"],
+		"environmentVariables":{
+                    "UDF_RUNTIME_DIR":"${udf_runtime_dir}"
+      },
+      "internal":"true"
+    },          
+      "kerberosPrincipals": [
+        {
+          "name": "DORIS_PRINCIPAL",
+          "primary": "${principal}",
+          "instance": "${host}"
+        },
+        {
+          "name": "SPNEGO_PRINCIPAL",
+          "primary": "HTTP",
+          "instance": "${host}"
+        }
+      ],
+      "commands": [],
+      "topology":{ 
+        "minInstances": "1"
+         		
+      },
+      "logging": {
+	    "dir" : "/var/log/doris",
+        "filename" : "be.INFO",
+        "modifiable" : true,
+        "configName" : "sys_log_dir",
+        "loggingType" : "glog"
+      },
+      "parameters": [
+        {
+          "name": "be_port",
+          "label": "Doris Backend  Port",
+          "configName": "be_port",
+          "description": "BE for receiving requests from FE",
+          "required": "true",
+          "type": "port",
+          "default": 9060
+        },
+		{
+          "name": "webserver_port",
+          "label": "Doris Backend web Port",
+          "configName": "webserver_port",
+          "description": "The port of the Doris Backend Web UI",
+          "required": "true",
+          "type": "port",
+          "default": 8040
+        },
+		{
+          "name": "heartbeat_service_port",
+          "label": "Doris Backend heart beat service port",
+          "configName": "heartbeat_service_port",
+          "description": "the heart beat service port (thrift) on BE, used to receive heartbeat from FE",
+          "required": "true",
+          "type": "port",
+          "default": 9050
+        },
+		{
+          "name": "brpc_port",
+          "label": "Doris Backend brpc port",
+          "configName": "brpc_port",
+          "description": "thrift server port on FE, the configuration of each fe needs to be consistent",
+          "required": "true",
+          "type": "port",
+          "default": 9020
+        },
+        {
+          "name": "priority_networks",
+          "label": "priority networks",
+          "configName": "priority_networks",
+          "description": "priority networks",
+          "type": "string",
+          "default": "0.0.0.0/24"
+        },
+        {
+          "name": "storage_root_path",
+          "label": "Backend Data Directory",
+          "description": "data storage directory.",
+          "required": "true",
+          "type": "path_array",
+		  "separator":";",
+          "pathType": "localDataDir",
+          "default": ["/data/doris/storage"],
+          "required": "true",
+          "configurableInWizard": true
+        },
+		  {
+            "name":"small_file_dir",
+            "label":"SMALL FILE DIR",
+            "description":"small file location",
+            "configName":"small_file_dir",
+            "default":"/data/be/mate/small_file",
+            "type":"path",
+            "pathType":"localDataDir",
+            "required":"false"
+       },
+	     {
+            "name":"user_function_dir",
+            "label":"UDF FUNCTION DIR",
+            "description":"udf function directory",
+            "configName":"user_function_dir",
+            "default":"/data/be/mate/udf",
+            "type":"path",
+            "pathType":"localDataDir",
+            "required":"false"
+       },
+	     {
+            "name":"udf_runtime_dir",
+            "label":"UDF RUNTIME DIR",
+            "description":"Store Fe log location",
+            "configName":"udf_runtime_dir",
+            "default":"/data/be/mate/udf-runtime",
+            "type":"path",
+            "pathType":"localDataDir",
+            "required":"true"
+       }
+      ],
+      "sslServer": {
+        "keyIdentifier": "doris_frontend",
+        "enabledConfigName": "doris.ssl",
+        "keystorePasswordCredentialProviderCompatible": false,
+        "keystorePasswordScriptBased": false,
+        "keystoreKeyPasswordScriptBased": false,
+        "keystoreKeyPasswordCredentialProviderCompatible": false,
+        "keyPasswordOptionality": "required"
+      },
+      "externalLink" : {
+        "name" : "doris_backend_address",
+        "label" : "Doris Backend Web UI",
+        "url" : "http://${host}:${webserver_port}",
+        "secureUrl" : "https://${host}:${webserver_port}"
+      },
+      "configWriter": {
+        "generators": [
+          {
+            "filename": "conf/be.conf",
+            "configFormat": "properties",
+            "includedParams": [
+                "be_port",
+                "webserver_port",
+                "heartbeat_service_port",
+                "brpc_port",
+            	"priority_networks",
+		        "storage_root_path",
+		        "small_file_dir",
+		        "user_function_dir",
+                       "log_dir"
+            ]
+          },
+          {
+            "filename" : "conf/hdfs-site.xml",
+            "refreshable":false,
+            "configFormat" : "hadoop_xml",
+              "excludedParams": [
+                "be_port",
+                "webserver_port",
+                "heartbeat_service_port",
+                "brpc_port",
+                "priority_networks",
+                "storage_root_path",
+                "small_file_dir",
+                "user_function_dir"
+            ]
+          }
+	  ],
+	  "auxConfigGenerators" : [
+          {
+            "filename" : "conf/odbcinst.ini",
+            "sourceFilename" : "aux/odbcinst.ini"
+          },
+          {
+            "filename" : "conf/asan_suppr.conf",
+            "sourceFilename" : "aux/asan_suppr.conf"
+          }
+  ]
+      }
+	},
+	 {
+      "name": "BROKER",
+      "label": "Broker",
+      "pluralLabel": "Broker Server",
+      "jvmBased": true,
+      "startRunner": {
+        "program": "scripts/brokercontrol.sh",
+        "args": ["start"],
+		"environmentVariables":{
+                    "BROKER_MAX_HEAPSIZE":"${broker_server_max_heapsize}",
+                    "BROKER_LOG_DIR":"${broker_log_dir}"
+      },
+     "internal" : "true"
+    },          
+      "kerberosPrincipals": [
+        {
+          "name": "DORIS_PRINCIPAL",
+          "primary": "${principal}",
+          "instance": "${host}"
+        },
+        {
+          "name": "SPNEGO_PRINCIPAL",
+          "primary": "HTTP",
+          "instance": "${host}"
+        }
+      ],
+      "commands": [],
+      "topology": {
+         		
+      },
+      "logging": {
+	"dir" : "/var/log/doris",
+        "filename" : "apache_hdfs_broker.log",
+        "modifiable" : true,
+        "configName" : "log4j2-spring.xml",
+        "loggingType" : "logback"
+      },
+      "parameters": [
+        {
+          "name": "broker_ipc_port",
+          "label": "Doris Broker  Port",
+          "configName": "broker_ipc_port",
+          "description": "the thrift rpc port",
+          "required": "true",
+          "type": "port",
+          "default": 8000
+        },
+		{
+          "name": "client_expire_seconds",
+          "label": "Doris Backend web Port",
+          "configName": "client_expire_seconds",
+          "description": "client session will be deleted if not receive ping after this time",
+          "required": "true",
+          "type": "string",
+          "default": 3000
+        },
+		{
+
+            "name":"broker_server_max_heapsize",
+            "label":"Java Heap Size of Frontend Server in Bytes",
+            "description":"Maximum size for the Java process heap memory. Passed to Java -Xmx. Measured in bytes.",
+            "required":"true",
+            "type":"memory",
+            "unit":"bytes",
+            "min":67108864,
+            "default":536870912
+       },
+        {
+            "name":"broker_log_dir",
+            "label":"BROKER LOG DIR",
+            "description":"Store Fe log location",
+            "configName":"sys_log_dir",
+            "default":"/var/log/doris",
+            "type":"path",
+            "pathType":"serviceSpecific",
+            "required":"true"
+       }
+      ],
+      "sslServer": {
+        "keyIdentifier": "doris_frontend",
+        "enabledConfigName": "doris.ssl",
+        "keystorePasswordCredentialProviderCompatible": false,
+        "keystorePasswordScriptBased": false,
+        "keystoreKeyPasswordScriptBased": false,
+        "keystoreKeyPasswordCredentialProviderCompatible": false,
+        "keyPasswordOptionality": "required"
+      },
+      "configWriter": {
+        "generators": [
+          {
+            "filename": "conf/apache_hdfs_broker.conf",
+            "configFormat": "properties",
+            "includedParams": [
+                "broker_ipc_port",
+                "client_expire_seconds",
+                "broker_log_dir"
+            ]
+          },
+		  {
+            "filename" : "conf/core-site.xml",
+            "refreshable" : false,
+            "configFormat" : "hadoop_xml"
+          },
+		  {
+            "filename" : "conf/hdfs-site.xml",
+            "refreshable" : false,
+            "configFormat" : "hadoop_xml"
+          },
+		  {
+            "filename" : "conf/hive-site.xml",
+            "refreshable" : false,
+            "configFormat" : "hadoop_xml"
+          }
+        ]
+      }
+    }
+  ],
+    "gateway" : {
+    "alternatives" : {
+      "name" : "conf",
+      "priority" : 51,
+      "linkRoot" : "/etc/doris"
+    },
+    "configWriter" : {
+       "peerConfigGenerators" : [
+          {
+            "filename": "conf/doirs.properties",
+            "params": ["http_port","query_port","edit_log_port" ],
+            "roleName": "FRONTEND"
+          }
+        ]
+     }
+  }
+}

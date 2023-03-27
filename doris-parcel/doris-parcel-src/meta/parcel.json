@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "name": "doris",
+  "version": "%PARCELVERSION%",
+  "setActiveSymlink": true,
+
+  "depends": "",
+  "replaces": "",
+  "conflicts": "DORIS",
+
+  "provides": [
+    "doris"
+  ],
+
+  "scripts": {
+    "defines": "doris_env.sh"
+  },
+
+  "components": [],
+  "packages": [],
+  "users": {
+    "doris": {
+      "longname"    : "doris",
+      "home"        : "/var/lib/doris",
+      "shell"       : "/bin/bash",
+      "extra_groups": [ "doris" ]
+    }
+  },
+
+  "groups": [
+    "doris"
+  ]
+}

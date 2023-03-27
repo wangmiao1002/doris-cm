@@ -1,0 +1,3 @@
+#!/bin/bash
+export DORIS_HOME=$PARCELS_ROOT/$PARCEL_DIRNAME
+
